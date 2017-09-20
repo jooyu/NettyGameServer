@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"  
+	xmlns:util="http://www.springframework.org/schema/util"  
+    xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+			http://www.springframework.org/schema/task  
+			http://www.springframework.org/schema/task/spring-task-3.2.xsd  
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+			">
+
+	<context:annotation-config />
+	<context:component-scan base-package="cpgame.demo" />
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:config.properties</value>
+			</list>
+		</property>
+	</bean>
+	<import resource="jdbc.xml"/>
+	<bean id="serverInitializer" class="cpgame.demo.netty.ServerInitializer"
+		init-method="init">
+		<property name="timeout" value="${app.channel.readtimeout}" />
+		<property name="handlerDispatcher" ref="handlerDispatcher" />
+		<property name="requestType" value="${app.requestType}" />
+	</bean>
+
+	<bean id="handlerDispatcher" class="cpgame.demo.dispatcher.HandlerDispatcher">
+		<property name="messageExecutor">
+			<bean class="cpgame.demo.domain.FiexThreadPoolExecutor"
+				destroy-method="shutdown">
+				<constructor-arg value="${app.handler.pool.corePoolSize}" />
+				<constructor-arg value="${app.handler.pool.maximumPoolSize}" />
+				<constructor-arg value="${app.handler.pool.keepAliveSecond}" />
+				<constructor-arg value="${app.handler.pool.name}" />
+			</bean>
+		</property>
+		<property name="sleepTime" value="${app.handler.sleepTime}" />
+		<property name="handlerMap" ref="gameHandlerMap" />
+	</bean>
+
+	<bean id="gameHandlerMap" class="java.util.HashMap">
+		<constructor-arg>
+			<map>
+				<entry key="999">
+					<bean class="cpgame.demo.handler.InitHandler">
+					</bean>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+</beans>
